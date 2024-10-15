@@ -36,12 +36,20 @@ h1 {
 }
 
 #app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  display: flex;
+  flex-direction: column; /* Stack elements vertically */
+  align-items: center; /* Center horizontally */
+  justify-content: flex-start; /* Align items to the top */
+  width: 100%; /* Full width of the page */
+  position: absolute;
+  top: 0;
+  padding-top: 20px; /* Adjust padding as needed */
+  box-sizing: border-box;
 }
-
+h1 {
+  margin: 0; /* Remove default margin */
+  text-align: center; /* Center text within the h1 element */
+}
 .logo {
   height: 6em;
   padding: 1.5em;
@@ -79,6 +87,14 @@ button:hover {
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
+}
+
+canvas {
+  border: 10px solid rgb(235, 8, 8);
+  border-radius: 10px;
+  box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.726);
+  margin-top: 60px; /* Add space between title and canvas */
+  
 }
 
 @media (prefers-color-scheme: light) {
