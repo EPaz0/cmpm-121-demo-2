@@ -28,27 +28,49 @@ if(!context)
 }
 
 let isDrawing = false;
+const points: Array<{x: number; y: number }> = [];
+
 
 //Start drawing
-canvas.addEventListener("mousedown", (event) => {
+canvas.addEventListener("mousedown", (event) => 
+{
     isDrawing = true;
-    context.beginPath();
-    context.moveTo(event.offsetX, event.offsetY);
+    points.push({ x: event.offsetX, y: event.offsetY });
+    canvas.dispatchEvent(new Event("drawing-changed"));
 });
 
 //Draw as the mouse moves
 canvas.addEventListener("mousemove", (event) => {
-    if(isDrawing) {
-        context.lineTo(event.offsetX, event.offsetY);
-        context.stroke();
+    if (isDrawing) 
+        {
+        points.push({ x: event.offsetX, y: event.offsetY });
+        canvas.dispatchEvent(new Event("drawing-changed"));
     }
 });
 
 //Stop drawing
 canvas.addEventListener("mouseup", () => {
     isDrawing = false;
+    //context.closePath();
+});
+
+//Observer tp redraw lines when "drawing-changed" event is dispatched
+canvas.addEventListener("drawing-changed", () => {
+    context.clearRect(0, 0, canvas.width, canvas.height);
+
+    context.beginPath();
+    for (let i = 1; i < points.length; i++) {
+      const { x: prevX, y: prevY } = points[i - 1];
+      const { x, y } = points[i];
+      context.moveTo(prevX, prevY);
+      context.lineTo(x, y);
+      context.stroke();
+    }
     context.closePath();
 });
+
+
+
 
 
 //Clear the canvas
