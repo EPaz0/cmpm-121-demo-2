@@ -40,10 +40,40 @@ class Line {
   }
 }
 
+// ToolPreview class to show the preview of the tool
+class ToolPreview {
+  x: number;
+  y: number;
+  thickness: number;
+
+  constructor(x: number, y: number, thickness: number) {
+    this.x = x;
+    this.y = y;
+    this.thickness = thickness;
+  }
+
+  // Update the preview position
+  update(x: number, y: number, thickness: number) {
+    this.x = x;
+    this.y = y;
+    this.thickness = thickness;
+  }
+
+  // Draw the preview on the canvas
+  draw(ctx: CanvasRenderingContext2D) {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.thickness / 2, 0, Math.PI * 2);
+    ctx.strokeStyle = "black"; // Change color if needed
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+}
+
 // Array to store all lines
 const lines: Line[] = [];
 const redoLines: Line[] = [];
 let currentLine: Line | null = null;
+let toolPreview: ToolPreview | null = new ToolPreview(0, 0, 3); // Start tool preview
 
 // Default marker thickness (medium thickness by default)
 let currentThickness: number = 3;
@@ -67,7 +97,6 @@ const cursor = { active: false, x: 0, y: 0 };
 // Start drawing
 canvas.addEventListener("mousedown", (event) => {
   if (currentThickness === null) {
-    console.log("No tool selected!"); // Debug log
     return; // Prevent drawing if no tool selected
   }
   cursor.active = true;
@@ -84,26 +113,38 @@ canvas.addEventListener("mousedown", (event) => {
 
 // Continue drawing the current line
 canvas.addEventListener("mousemove", (event) => {
-  if (cursor.active && currentLine) {
-    cursor.x = event.offsetX;
-    cursor.y = event.offsetY;
-    currentLine.drag(cursor.x, cursor.y);
+  cursor.x = event.offsetX;
+  cursor.y = event.offsetY;
 
-    redraw();
+  // Update tool preview position and thickness
+  if (toolPreview) {
+    toolPreview.update(cursor.x, cursor.y, currentThickness);
   }
+
+  if (cursor.active && currentLine) {
+    currentLine.drag(cursor.x, cursor.y);
+  }
+
+  redraw();
 });
 
 // Stop drawing
 canvas.addEventListener("mouseup", () => {
   cursor.active = false;
   currentLine = null;
+  redraw();
 });
 
-// Redraw all lines on the canvas
+// Redraw all lines and tool preview on the canvas
 function redraw() {
   context.clearRect(0, 0, canvas.width, canvas.height); // Use 'context' here
   for (const line of lines) {
     line.display(context); // Call the display method of each Line
+  }
+
+  // Always draw the tool preview at the cursor position
+  if (toolPreview) {
+    toolPreview.draw(context);
   }
 }
 
