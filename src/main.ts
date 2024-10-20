@@ -11,6 +11,39 @@ const titleElement = document.createElement("h1");
 titleElement.textContent = APP_NAME;
 app.appendChild(titleElement);
 
+class Line {
+  private points: {x: number, y: number}[] = [];
+
+  constructor(startX: number, startY: number) {
+      this.points = [{ x: startX, y: startY }];
+  }
+
+  //Add new point to line
+  drag(x: number, y: number) {
+      this.points.push({ x, y });
+  }
+  
+
+  display(ctx: CanvasRenderingContext2D)
+  {
+      if(this.points.length > 1) 
+      {
+          ctx.beginPath();
+          const { x, y } = this.points[0];
+          ctx.moveTo(x, y);
+          for(const point of this.points) {
+              ctx.lineTo(point.x, point.y);
+          }
+          ctx.stroke();
+      }
+  }
+}
+
+// Array to store all lines
+const lines: Line[] = [];
+const redoLines: Line[] = [];
+let currentLine: Line | null = null
+
 
 //Create canvas element
 const canvas  = document.createElement("canvas");
@@ -27,12 +60,7 @@ if(!context)
     throw new Error("2d context not supported");
 }
 
-//let isDrawing = false;
-const lines: Array<Array<{ x: number; y: number }>> = [];
-const redoLines: Array<Array<{ x: number; y: number }>> = [];
-let currentLine: Array<{ x: number; y: number }> | null = null;
 const cursor = { active: false, x: 0, y: 0 };
-
 
 //Start drawing
 canvas.addEventListener("mousedown", (event) => 
@@ -41,7 +69,7 @@ canvas.addEventListener("mousedown", (event) =>
     cursor.x = event.offsetX;
     cursor.y = event.offsetY;
 
-    currentLine = [{ x: cursor.x, y: cursor.y }];
+    currentLine = new Line(cursor.x, cursor.y);
     lines.push(currentLine);
     redoLines.length = 0; // Clear redo stack
 
@@ -53,7 +81,7 @@ canvas.addEventListener("mousedown", (event) =>
     if (cursor.active && currentLine) {
       cursor.x = event.offsetX;
       cursor.y = event.offsetY;
-      currentLine.push({ x: cursor.x, y: cursor.y });
+      currentLine.drag(cursor.x, cursor.y);
 
       redraw();
     }
@@ -67,17 +95,9 @@ canvas.addEventListener("mouseup", () => {
 
   // Redraw all lines on the canvas
   function redraw() {
-    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.clearRect(0, 0, canvas.width, canvas.height); // Use 'context' here
     for (const line of lines) {
-      if (line.length > 1) {
-        context.beginPath();
-        const { x, y } = line[0];
-        context.moveTo(x, y);
-        for (const point of line) {
-          context.lineTo(point.x, point.y);
-        }
-        context.stroke();
-      }
+      line.display(context); // Call the display method of each Line
     }
   }
 
