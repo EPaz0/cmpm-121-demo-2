@@ -11,6 +11,38 @@ const titleElement = document.createElement("h1");
 titleElement.textContent = APP_NAME;
 app.appendChild(titleElement);
 
+
+//StickerPreview
+class StickerPreview{
+  x: number;
+  y: number;
+  sticker: string;
+
+  constructor(x: number, y: number, sticker: string){
+    this.x = x;
+    this.y = y;
+    this.sticker = sticker;
+  }
+
+  update(x: number, y: number, sticker: string){
+    this.x = x;
+    this.y = y;
+    this.sticker = sticker;
+  }
+
+  //draw the sticker preview on canvas
+  draw(ctx: CanvasRenderingContext2D){
+    ctx.font = "30px Arial";
+    ctx.fillText(this.sticker, this.x, this.y);
+  }
+}
+
+// Array to store stickers
+const stickers: { x: number; y: number; sticker: string }[] = [];
+let stickerPreview: StickerPreview | null = null;
+let selectedSticker: string | null = null;
+
+
 class Line {
   private points: { x: number; y: number }[] = [];
   private thickness: number;
@@ -81,8 +113,8 @@ let selectedTool: string | null = null; // Track the selected tool
 
 // Create canvas element
 const canvas = document.createElement("canvas");
-canvas.width = 256;
-canvas.height = 256;
+canvas.width = 700;
+canvas.height = 500;
 // Append the canvas element to the app container
 app.appendChild(canvas);
 
@@ -103,10 +135,18 @@ canvas.addEventListener("mousedown", (event) => {
   cursor.x = event.offsetX;
   cursor.y = event.offsetY;
 
-  // Create a new line object with current thickness
-  currentLine = new Line(cursor.x, cursor.y, currentThickness);
-  lines.push(currentLine);
-  redoLines.length = 0; // Clear redo stack
+  if(selectedSticker){
+    stickers.push({ x: cursor.x, y: cursor.y, sticker: selectedSticker });
+    stickerPreview = null; // Remove sticker preview once it's placed
+    selectedSticker = null; // Deselect the sticker after placing it
+    //stickerPreview = new StickerPreview(cursor.x, cursor.y, selectedSticker);
+  }else{
+    // Create a new line object with current thickness
+    currentLine = new Line(cursor.x, cursor.y, currentThickness);
+    lines.push(currentLine);
+    redoLines.length = 0; // Clear redo stack
+  }
+
 
   redraw();
 });
@@ -121,9 +161,14 @@ canvas.addEventListener("mousemove", (event) => {
     toolPreview.update(cursor.x, cursor.y, currentThickness);
   }
 
+  if(stickerPreview){
+    stickerPreview.update(cursor.x, cursor.y, selectedSticker || "");
+  }
+
   if (cursor.active && currentLine) {
     currentLine.drag(cursor.x, cursor.y);
   }
+
 
   redraw();
 });
@@ -142,15 +187,39 @@ function redraw() {
     line.display(context); // Call the display method of each Line
   }
 
+  for (const sticker of stickers) {
+    context.font = "30px Arial";
+    context.fillText(sticker.sticker, sticker.x, sticker.y);
+  }
   // Always draw the tool preview at the cursor position
   if (toolPreview) {
     toolPreview.draw(context);
   }
+
+  if (stickerPreview) {
+    stickerPreview.draw(context);
+  }
 }
+
 
 // Button Container
 const buttonContainer = document.createElement("div");
 buttonContainer.classList.add("button-container");
+
+
+// Sticker buttons
+const stickersList = ["🐵", "🙉", "🦧"];
+stickersList.forEach((sticker) => {
+  const button = document.createElement("button");
+  button.textContent = sticker;
+  button.onclick = () => {
+    selectedSticker = sticker;
+    stickerPreview = new StickerPreview(cursor.x, cursor.y, sticker);
+    currentLine = null; // Disable drawing while a sticker is selected
+    redraw();
+  };
+  buttonContainer.appendChild(button);
+});
 
 // Clear the canvas
 const clearButton = document.createElement("button");
@@ -158,6 +227,7 @@ clearButton.textContent = "Clear";
 clearButton.style.marginTop = "10px";
 clearButton.onclick = () => {
   lines.length = 0;
+  stickers.length = 0;
   redoLines.length = 0;
   redraw();
 };
