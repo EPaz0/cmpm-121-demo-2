@@ -105,6 +105,32 @@ canvas {
   
 }
 
+.control-button-container {
+  display: flex;
+  gap: 10px; /* Space between buttons */
+  justify-content: center;
+  margin-top: 20px;
+}
+
+/* Sticker section - aligned below the control buttons */
+.sticker-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 20px; /* Space between control buttons and stickers */
+}
+
+.custom-sticker-button {
+  align-self: flex-start; /* Align to the left */
+  margin-bottom: 10px; /* Space below the custom sticker button */
+}
+
+.sticker-container {
+  display: flex;
+  gap: 10px;
+  justify-content: center; /* Center stickers */
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
