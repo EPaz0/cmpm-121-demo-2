@@ -122,8 +122,8 @@ let selectedTool: string | null = null; // Track the selected tool
 
 // Create canvas element
 const canvas = document.createElement("canvas");
-canvas.width = 700;
-canvas.height = 500;
+canvas.width = 256;
+canvas.height = 256;
 // Append the canvas element to the app container
 app.appendChild(canvas);
 
@@ -322,6 +322,37 @@ buttonContainer.appendChild(createButton("Thick Marker", () => {
     updateToolButtonStyles(thickButton);
   }
 }, "thickButton"));
+
+
+// Add the export button
+buttonContainer.appendChild(createButton("Export", () => {
+  // Create a temporary canvas with a higher resolution (4x the current size)
+  const exportCanvas = document.createElement("canvas");
+  exportCanvas.width = 1024;
+  exportCanvas.height = 1024;
+  
+  const exportContext = exportCanvas.getContext("2d")!;
+  
+  // Scale the context (4x in both directions)
+  exportContext.scale(4, 4);
+  
+  // Redraw the lines and stickers on the export canvas
+  lines.forEach((line) => {
+      line.display(exportContext);
+  });
+
+  stickers.forEach((sticker) => {
+      exportContext.font = "30px Arial";
+      exportContext.fillText(sticker.sticker, sticker.x, sticker.y);
+  });
+  
+  // Trigger a download of the canvas content as a PNG file
+  const anchor = document.createElement("a");
+  anchor.href = exportCanvas.toDataURL("image/png");
+  anchor.download = "sketchpad.png";
+  anchor.click();
+}));
+
 
 // Add the stickerButtonContainer to the main buttonContainer
 buttonContainer.appendChild(stickerButtonContainer);
