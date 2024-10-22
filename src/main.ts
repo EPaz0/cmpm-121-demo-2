@@ -72,6 +72,15 @@ class Line {
   }
 }
 
+function createCustomSticker() {
+  const customSticker = prompt("Enter your custom sticker text:", "❓"); // Default value is an emoji, user can replace it
+  if (customSticker) {
+    stickersList.push(customSticker); // Add to the stickers array
+    renderStickerButtons(); // Re-render the buttons to include the new sticker
+  }
+}
+
+
 // ToolPreview class to show the preview of the tool
 class ToolPreview {
   x: number;
@@ -126,6 +135,36 @@ if (!context) {
 
 const cursor = { active: false, x: 0, y: 0 };
 
+
+// Function to handle sticker selection and updates
+function selectSticker(sticker: string) {
+  selectedSticker = sticker;
+  stickerPreview = new StickerPreview(cursor.x, cursor.y, sticker);
+  currentLine = null;
+  redraw();
+}
+
+// Redraw all lines and tool preview on the canvas
+function redraw() {
+  context.clearRect(0, 0, canvas.width, canvas.height); // Use 'context' here
+  for (const line of lines) {
+    line.display(context); // Call the display method of each Line
+  }
+
+  for (const sticker of stickers) {
+    context.font = "30px Arial";
+    context.fillText(sticker.sticker, sticker.x, sticker.y);
+  }
+  // Always draw the tool preview at the cursor position
+  if (toolPreview) {
+    toolPreview.draw(context);
+  }
+
+  if (stickerPreview) {
+    stickerPreview.draw(context);
+  }
+}
+
 // Start drawing
 canvas.addEventListener("mousedown", (event) => {
   if (currentThickness === null) {
@@ -177,122 +216,116 @@ canvas.addEventListener("mousemove", (event) => {
 canvas.addEventListener("mouseup", () => {
   cursor.active = false;
   currentLine = null;
-  redraw();
 });
-
-// Redraw all lines and tool preview on the canvas
-function redraw() {
-  context.clearRect(0, 0, canvas.width, canvas.height); // Use 'context' here
-  for (const line of lines) {
-    line.display(context); // Call the display method of each Line
-  }
-
-  for (const sticker of stickers) {
-    context.font = "30px Arial";
-    context.fillText(sticker.sticker, sticker.x, sticker.y);
-  }
-  // Always draw the tool preview at the cursor position
-  if (toolPreview) {
-    toolPreview.draw(context);
-  }
-
-  if (stickerPreview) {
-    stickerPreview.draw(context);
-  }
-}
 
 
 // Button Container
 const buttonContainer = document.createElement("div");
 buttonContainer.classList.add("button-container");
 
+const stickerButtonContainer = document.createElement("div");
+stickerButtonContainer.classList.add("sticker-container");
+
 
 // Sticker buttons
 const stickersList = ["🐵", "🙉", "🦧"];
-stickersList.forEach((sticker) => {
-  const button = document.createElement("button");
-  button.textContent = sticker;
-  button.onclick = () => {
-    selectedSticker = sticker;
-    stickerPreview = new StickerPreview(cursor.x, cursor.y, sticker);
-    currentLine = null; // Disable drawing while a sticker is selected
-    redraw();
-  };
-  buttonContainer.appendChild(button);
-});
 
-// Clear the canvas
-const clearButton = document.createElement("button");
-clearButton.textContent = "Clear";
-clearButton.style.marginTop = "10px";
-clearButton.onclick = () => {
+
+function renderStickerButtons() {
+  stickerButtonContainer.innerHTML = "";
+  stickersList.forEach(sticker => {
+    const button = document.createElement("button");
+    button.textContent = sticker;
+    button.onclick = () => selectSticker(sticker);
+    stickerButtonContainer.appendChild(button);
+  });
+
+  const customStickerButton = document.createElement("button");
+  customStickerButton.textContent = "Create Custom Sticker";
+  customStickerButton.onclick = createCustomSticker;
+  stickerButtonContainer.appendChild(customStickerButton);
+}
+
+// Add buttons for Clear, Undo, Redo, and Marker selection
+function createButton(label: string, action: () => void, id?: string) {
+  const button = document.createElement("button");
+  button.textContent = label;
+  button.onclick = action;
+  
+  if (id) {
+    button.id = id;
+  }
+
+  return button;
+}
+
+function updateToolButtonStyles(selectedButton: HTMLButtonElement  | null) {
+  // Deselect all tool buttons by removing "selectedTool" class
+  document.querySelectorAll("button").forEach(button => {
+    button.classList.remove("selectedTool");
+  });
+
+  // If there's a selected button, apply the "selectedTool" class to it
+  if (selectedButton) {
+    selectedButton.classList.add("selectedTool");
+  }
+}
+
+// Append control buttons
+buttonContainer.appendChild(createButton("Clear", () => {
   lines.length = 0;
   stickers.length = 0;
   redoLines.length = 0;
   redraw();
-};
-buttonContainer.appendChild(clearButton);
+}));
 
-// Undo button
-const undoButton = document.createElement("button");
-undoButton.textContent = "Undo";
-undoButton.style.marginTop = "10px";
-undoButton.onclick = () => {
+buttonContainer.appendChild(createButton("Undo", () => {
   if (lines.length > 0) {
     redoLines.push(lines.pop()!);
     redraw();
   }
-};
-buttonContainer.appendChild(undoButton);
+}));
 
-// Redo button
-const redoButton = document.createElement("button");
-redoButton.textContent = "Redo";
-redoButton.style.marginTop = "10px";
-redoButton.onclick = () => {
+buttonContainer.appendChild(createButton("Redo", () => {
   if (redoLines.length > 0) {
     lines.push(redoLines.pop()!);
     redraw();
   }
-};
-buttonContainer.appendChild(redoButton);
+}));
 
-// Thin Marker Button
-const thinButton = document.createElement("button");
-thinButton.textContent = "Thin Marker";
-thinButton.onclick = () => {
+buttonContainer.appendChild(createButton("Thin Marker", () => {
   if (selectedTool === "thin") {
-    // Deselect tool
-    currentThickness = 3; // Reset back to medium thickness
+    // Deselect the tool if it's already selected
     selectedTool = null;
-    thinButton.classList.remove("selectedTool"); // Remove selected style
+    currentThickness = 3; // Reset thickness to default
+    updateToolButtonStyles(null); // Deselect all buttons
   } else {
     // Select thin marker
-    currentThickness = 1; // Set the thickness to thin
     selectedTool = "thin";
-    thinButton.classList.add("selectedTool"); // Apply selected style
-    thickButton.classList.remove("selectedTool"); // Remove thick button's style
+    currentThickness = 1;
+    const thinButton = document.getElementById("thinButton") as HTMLButtonElement;
+    updateToolButtonStyles(thinButton);
   }
-};
-buttonContainer.appendChild(thinButton);
+}, "thinButton"));
 
-// Thick Marker Button
-const thickButton = document.createElement("button");
-thickButton.textContent = "Thick Marker";
-thickButton.onclick = () => {
+buttonContainer.appendChild(createButton("Thick Marker", () => {
   if (selectedTool === "thick") {
-    // Deselect tool
-    currentThickness = 3; // Reset back to medium thickness
+    // Deselect the tool if it's already selected
     selectedTool = null;
-    thickButton.classList.remove("selectedTool"); // Remove selected style
+    currentThickness = 3; // Reset thickness to default
+    updateToolButtonStyles(null); // Deselect all buttons
   } else {
     // Select thick marker
-    currentThickness = 9; // Set the thickness to thick
     selectedTool = "thick";
-    thickButton.classList.add("selectedTool"); // Apply selected style
-    thinButton.classList.remove("selectedTool"); // Remove thin button's style
+    currentThickness = 9;
+    const thickButton = document.getElementById("thickButton") as HTMLButtonElement;
+    updateToolButtonStyles(thickButton);
   }
-};
-buttonContainer.appendChild(thickButton);
+}, "thickButton"));
 
+// Add the stickerButtonContainer to the main buttonContainer
+buttonContainer.appendChild(stickerButtonContainer);
 app.appendChild(buttonContainer);
+
+
+renderStickerButtons();
