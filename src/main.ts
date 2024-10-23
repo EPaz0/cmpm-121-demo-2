@@ -12,6 +12,20 @@ titleElement.textContent = APP_NAME;
 app.appendChild(titleElement);
 
 
+class Drawable {
+  x: number;
+  y: number;
+  thickness: number;
+  color: string;
+
+  constructor(x: number, y: number, thickness: number, color: string) {
+    this.x = x;
+    this.y = y;
+    this.thickness = thickness;
+    this.color = color;
+  }
+}
+
 // StickerPreview
 class StickerPreview {
   x: number;
@@ -42,14 +56,8 @@ const stickers: { x: number; y: number; sticker: string }[] = [];
 let stickerPreview: StickerPreview | null = null;
 let selectedSticker: string | null = null;
 
-class Line {
+class Line extends Drawable {
   private points: { x: number; y: number }[] = [];
-  private thickness: number;
-
-  constructor(startX: number, startY: number, thickness: number) {
-    this.points = [{ x: startX, y: startY }];
-    this.thickness = thickness;
-  }
 
   // Add new point to line
   drag(x: number, y: number) {
@@ -60,6 +68,7 @@ class Line {
   display(ctx: CanvasRenderingContext2D) {
     if (this.points.length > 1) {
       ctx.lineWidth = this.thickness;
+      ctx.strokeStyle = this.color; 
       ctx.beginPath();
       const { x, y } = this.points[0];
       ctx.moveTo(x, y);
@@ -80,26 +89,20 @@ function createCustomSticker() {
 }
 
 // ToolPreview class to show the preview of the tool
-class ToolPreview {
-  x: number;
-  y: number;
-  thickness: number;
+class ToolPreview extends Drawable {
 
-  constructor(x: number, y: number, thickness: number) {
-    this.x = x;
-    this.y = y;
-    this.thickness = thickness;
-  }
 
   // Update the preview position
-  update(x: number, y: number, thickness: number) {
+  update(x: number, y: number, thickness: number, color: string) {
     this.x = x;
     this.y = y;
     this.thickness = thickness;
+    this.color = color;
   }
 
   // Draw the preview on the canvas
   draw(ctx: CanvasRenderingContext2D) {
+    ctx.strokeStyle = this.color;
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.thickness / 2, 0, Math.PI * 2);
     ctx.strokeStyle = "black";
@@ -112,11 +115,12 @@ class ToolPreview {
 const lines: Line[] = [];
 const redoLines: Line[] = [];
 let currentLine: Line | null = null;
-let toolPreview: ToolPreview | null = new ToolPreview(0, 0, 3);
+const toolPreview: ToolPreview | null = new ToolPreview(0, 0, 3, "#000000");
 
 // Default marker thickness
 let currentThickness: number = 3;
 let selectedTool: string | null = null;
+let currentColor: string = "#000000";
 
 // Create canvas element
 const canvas = document.createElement("canvas");
@@ -161,31 +165,13 @@ function redraw() {
   }
 }
 
-// Start drawing
-canvas.addEventListener("mousedown", (event) => {
-  cursor.active = true;
-  cursor.x = event.offsetX;
-  cursor.y = event.offsetY;
 
-  if (selectedSticker) {
-    stickers.push({ x: cursor.x, y: cursor.y, sticker: selectedSticker });
-    stickerPreview = null;
-    selectedSticker = null;
-  } else {
-    currentLine = new Line(cursor.x, cursor.y, currentThickness);
-    lines.push(currentLine);
-    redoLines.length = 0;
-  }
-
-  redraw();
-});
-
-canvas.addEventListener("mousemove", (event) => {
+function updateCursorAndDraw(event: MouseEvent) {
   cursor.x = event.offsetX;
   cursor.y = event.offsetY;
 
   if (toolPreview) {
-    toolPreview.update(cursor.x, cursor.y, currentThickness);
+    toolPreview.update(cursor.x, cursor.y, currentThickness, currentColor);
   }
 
   if (stickerPreview) {
@@ -197,7 +183,24 @@ canvas.addEventListener("mousemove", (event) => {
   }
 
   redraw();
+}
+
+canvas.addEventListener("mousemove", updateCursorAndDraw);
+canvas.addEventListener("mousedown", (event) => {
+  cursor.active = true;
+  updateCursorAndDraw(event);
+
+  if (selectedSticker) {
+    stickers.push({ x: cursor.x, y: cursor.y, sticker: selectedSticker });
+    stickerPreview = null;
+    selectedSticker = null;
+  } else {
+    currentLine = new Line(cursor.x, cursor.y, currentThickness, currentColor);
+    lines.push(currentLine);
+    redoLines.length = 0;
+  }
 });
+
 
 // Stop drawing
 canvas.addEventListener("mouseup", () => {
@@ -238,6 +241,21 @@ function renderStickerButtons() {
   stickerSection.appendChild(stickerButtonContainer);
 }
 app.appendChild(stickerSection);
+
+
+const sliderContainer = document.createElement("div");
+const slider = document.createElement("input");
+slider.type = "range";
+slider.min = "0";
+slider.max = "360";
+slider.value = "0";
+
+slider.oninput = (e) => {
+  const value = (e.target as HTMLInputElement).value;
+  currentColor = `hsl(${value}, 100%, 50%)`;
+};
+sliderContainer.appendChild(slider);
+app.appendChild(sliderContainer);
 
 // Add control buttons
 function createButton(label: string, action: () => void, id?: string) {
@@ -339,4 +357,3 @@ app.appendChild(stickerSection);
 
 // Render the sticker buttons
 renderStickerButtons();
-
