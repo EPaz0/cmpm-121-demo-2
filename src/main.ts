@@ -11,6 +11,11 @@ const titleElement = document.createElement("h1");
 titleElement.textContent = APP_NAME;
 app.appendChild(titleElement);
 
+// Constants
+const DEFAULT_MARKER_SIZE = 3;
+const THIN_MARKER_SIZE = 1;
+const THICK_MARKER_SIZE = 9;
+const STICKER_SIZE = "30";
 
 class Drawable {
   x: number;
@@ -91,7 +96,6 @@ function createCustomSticker() {
 // ToolPreview class to show the preview of the tool
 class ToolPreview extends Drawable {
 
-
   // Update the preview position
   update(x: number, y: number, thickness: number, color: string) {
     this.x = x;
@@ -115,10 +119,10 @@ class ToolPreview extends Drawable {
 const lines: Line[] = [];
 const redoLines: Line[] = [];
 let currentLine: Line | null = null;
-const toolPreview: ToolPreview | null = new ToolPreview(0, 0, 3, "#000000");
+const toolPreview: ToolPreview | null = new ToolPreview(0, 0, DEFAULT_MARKER_SIZE, "#000000");
 
 // Default marker thickness
-let currentThickness: number = 3;
+let currentThickness: number = DEFAULT_MARKER_SIZE;
 let selectedTool: string | null = null;
 let currentColor: string = "#000000";
 
@@ -152,7 +156,7 @@ function redraw() {
   }
 
   for (const sticker of stickers) {
-    context.font = "30px Arial";
+    context.font = STICKER_SIZE + "px Arial";
     context.fillText(sticker.sticker, sticker.x, sticker.y);
   }
 
@@ -304,11 +308,11 @@ buttonContainer.appendChild(createButton("Redo", () => {
 buttonContainer.appendChild(createButton("Thin Marker", () => {
   if (selectedTool === "thin") {
     selectedTool = null;
-    currentThickness = 3;
+    currentThickness = DEFAULT_MARKER_SIZE;
     updateToolButtonStyles(null);
   } else {
     selectedTool = "thin";
-    currentThickness = 1;
+    currentThickness = THIN_MARKER_SIZE;
     const thinButton = document.getElementById("thinButton") as HTMLButtonElement;
     updateToolButtonStyles(thinButton);
   }
@@ -317,11 +321,11 @@ buttonContainer.appendChild(createButton("Thin Marker", () => {
 buttonContainer.appendChild(createButton("Thick Marker", () => {
   if (selectedTool === "thick") {
     selectedTool = null;
-    currentThickness = 3;
+    currentThickness = DEFAULT_MARKER_SIZE;
     updateToolButtonStyles(null);
   } else {
     selectedTool = "thick";
-    currentThickness = 9;
+    currentThickness = THICK_MARKER_SIZE;
     const thickButton = document.getElementById("thickButton") as HTMLButtonElement;
     updateToolButtonStyles(thickButton);
   }
@@ -341,7 +345,7 @@ buttonContainer.appendChild(createButton("Export", () => {
   });
 
   stickers.forEach((sticker) => {
-    exportContext.font = "30px Arial";
+    exportContext.font = STICKER_SIZE + "px Arial";
     exportContext.fillText(sticker.sticker, sticker.x, sticker.y);
   });
 
